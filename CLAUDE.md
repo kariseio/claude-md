@@ -1,6 +1,6 @@
 # Global Working Rules
 
-Version: 2026-09-22
+Version: 2026-09-23
 
 Base: Andrej Karpathy's LLM coding guidelines (think before coding, simplicity first, surgical changes, goal-driven execution), plus correction rules from the Aug–Sep 2026 session insights: misread requirements, scope creep, unverified claims, and "done" reported without verification.
 
@@ -19,7 +19,7 @@ Do not execute on your own judgment until the user gives a direct instruction to
 
 ## 1. Before Acting on Ambiguous Requests (Restatement Gate)
 
-Claude's failure mode is not feeling doubt: it confidently picks one reading, executes, and the user discovers the misread only after reviewing the output. So the gate runs on the shape of the request, not on whether you feel uncertain. "It looks trivial" is not a reason to skip it.
+The gate runs on the shape of the request, not on whether you feel uncertain: misreads happen precisely when Claude feels no doubt. "It looks trivial" is not a reason to skip it.
 
 - Korean requests are often terse. If a request could mean 2+ things (e.g., "다 만들어줘", "X 추가", "정리해줘"), restate your interpretation and the concrete files/resources you will touch BEFORE acting, then stop and wait.
 - Scope words matter: "public and private", "both", "둘 다", "stage and dev", "각각". Enumerate each target explicitly and confirm. Never silently drop one.
@@ -27,22 +27,35 @@ Claude's failure mode is not feeling doubt: it confidently picks one reading, ex
 - References to things outside this conversation (e.g., "그거", "아까", "저번에") point at context you do not have. Ask what they refer to instead of guessing.
 - Anything that touches more than one file, or anything expensive to undo (state machines, queues, indexes, schemas, auth), goes through the gate regardless of wording.
 
-Restatement format (use exactly this, then stop and wait):
+The gate has two stages. Labels are Korean because the output is for the user.
+
+Stage 1, when the request itself forks: use this when the interpretation cannot be written as one sentence without hedging, or when different readings would change which files are touched. List 2–4 options, one line each (what changes + size; consequences only when they decide the choice), mark one as recommended with a one-line reason (or say in one line why none can be recommended), then stop.
 
 ```
-Interpretation: <the request in one sentence>
-Targets: <every environment/index/file, enumerated; "needs confirmation" if unclear>
-Will touch: <each file with a one-line reason>
-Will not touch: <explicit exclusions>
-Done when: <how completion will be proven>
-Ambiguities: <each part that reads 2+ ways, with each reading; "none" if none>
+이 요청은 N가지로 읽힙니다. 하나 골라주세요.
+
+A. <무엇이 바뀌는지 한 줄. 크기>  ← 추천: <이유 한 줄>
+B. <무엇이 바뀌는지 한 줄. 크기>
+
+변경 제외: <어느 갈래든 건드리지 않는 것>
+```
+
+Stage 2, once the reading is fixed (or when it was clear from the start): restate for that reading only, then stop. Omit any line you cannot fill. Never write a placeholder such as "to be provided after confirmation".
+
+```
+요청 해석: <요청을 한 문장으로>
+적용 범위: <환경/인덱스/파일 전부 열거>
+변경 파일: <파일별 한 줄 이유>
+변경 제외: <명시적 제외>
+완료 기준: <완료를 무엇으로 증명할지>
+확인 필요: <두 가지 이상으로 읽히는 부분과 각 해석. 없으면 이 줄 생략>
 ```
 
 Gate rules:
 
 - Start editing only after the user confirms (e.g., "ㅇㅇ", "그래", "진행", "맞아").
 - If the user corrects the restatement, issue a corrected restatement and stop again. Do not edit straight from a correction.
-- Simple single-file work that clearly reads one way does not need to stop, but the reply still opens with a one-line "Interpretation: ..." so a misread is visible immediately.
+- Simple single-file work that clearly reads one way does not need to stop, but the reply still opens with a one-line "요청 해석: ..." so a misread is visible immediately.
 - Skip the gate only when the user says so in that same request (e.g., "게이트 생략", "바로 해"). A skip does not carry over to the next request.
 
 Reading corrections:
@@ -55,7 +68,7 @@ Reading corrections:
 Don't assume. Don't hide confusion. Surface tradeoffs.
 
 - State your assumptions explicitly. If uncertain, ask.
-- If multiple interpretations exist, present them. Don't pick silently. The gate's "Ambiguities" line is where they go.
+- If multiple interpretations exist, present them. Don't pick silently. The gate's "확인 필요" line is where they go.
 - If a simpler approach exists, say so. Push back when warranted.
 - If something is unclear, stop. Name what's confusing. Ask.
 
@@ -88,7 +101,7 @@ Touch only what you must. Clean up only your own mess.
 
 Define success criteria. Loop until verified.
 
-- Transform tasks into verifiable goals. The gate's "Done when" line is this.
+- Transform tasks into verifiable goals. The gate's "완료 기준" line is this.
   - "Add validation" → "Write tests for invalid inputs, then make them pass"
   - "Fix the bug" → "Write a test that reproduces it, then make it pass"
   - "Refactor X" → "Ensure tests pass before and after"
