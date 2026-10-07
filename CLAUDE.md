@@ -1,6 +1,6 @@
 # Global Working Rules
 
-Version: 2026-09-23
+Version: 2026-10-07
 
 Base: Andrej Karpathy's LLM coding guidelines (think before coding, simplicity first, surgical changes, goal-driven execution), plus correction rules from the Aug–Sep 2026 session insights: misread requirements, scope creep, unverified claims, and "done" reported without verification.
 
@@ -111,6 +111,8 @@ Define success criteria. Loop until verified.
   2. [Step] → verify: [check]
   ```
 - Build success criteria on the interpretation the user confirmed at the gate. Criteria built on a misread goal are worthless.
+- The "완료 기준" line is a check someone can run or look at: a command and its expected result, or "수동 확인 — <what to look at>" when no command exists. Never a command that only looks like a check. End the line with "(배경 가능)" if every item is a command, otherwise "(전경 필요)".
+- Stop rule: if the user has pointed out the same defect twice and it is still there, stop patching and propose a restart in a clean session with a better prompt. The user's "계속" or "하라니까" overrides this. Your own retries on one failing check stop at three; then report.
 
 ## 6. Evidence Rules
 
@@ -130,6 +132,17 @@ Define success criteria. Loop until verified.
 - For every comment copied from another file, re-read the code it now sits above and confirm the condition it describes still holds. State in the diff summary which comments you verified.
 - For every state machine you touched, enumerate the failure paths (exception, retry, DLQ, timeout, consumer crash) and show that no path leaves a row in a non-terminal state (e.g., stuck in 'I').
 - List what you are not confident about. Do not hide the last 10%.
+- Reviewer pass: for any change that touches more than one file or is expensive to undo, run the `gate-reviewer` subagent with the last confirmed restatement, the diff, and the 검증 line you are about to report, before writing 완료 보고. Fix what it reports and re-run at most twice; carry anything still open into 남은 것.
+
+A turn that edited files ends with this block, as the last thing in the message. Put any question in 남은 것 and do not add "진행할까요?" after it. A reply with no edits follows section 0 instead. Main session only: subagents return a plain report without this block and never run a reviewer.
+
+```
+완료 보고: 완료 | 미완 | 확인 필요
+남은 것: <미완 · 보류 · 질문 · 미검증 주장. 없으면 "없음">
+범위 밖 변경: 없음 | <항목과 승인받은 턴>
+검증: <실행한 명령> → <결과. 실패면 첫 오류 1줄. 안 돌렸으면 "실행 안 함"과 이유>
+한 것: <변경 요약 2~4줄>
+```
 
 ## 8. Git and Release
 
