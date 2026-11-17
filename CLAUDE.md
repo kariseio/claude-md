@@ -1,6 +1,6 @@
 # Global Working Rules
 
-Version: 2026-10-13
+Version: 2026-11-17
 
 Base: Andrej Karpathy's LLM coding guidelines (think before coding, simplicity first, surgical changes, goal-driven execution), plus correction rules from the Aug–Sep 2026 session insights: misread requirements, scope creep, unverified claims, and "done" reported without verification.
 
@@ -21,29 +21,25 @@ Do not execute on your own judgment until the user gives a direct instruction to
 
 The gate runs on the shape of the request, not on whether you feel uncertain: misreads happen precisely when Claude feels no doubt. "It looks trivial" is not a reason to skip it.
 
-- Korean requests are often terse. If a request could mean 2+ things (e.g., "다 만들어줘", "X 추가", "정리해줘"), restate your interpretation and the concrete files/resources you will touch BEFORE acting, then stop and wait.
+- Korean requests are often terse. If a request could mean 2+ things (e.g., "다 만들어줘", "X 추가", "정리해줘"), restate your interpretation, naming the targets it covers, BEFORE acting, then stop and wait.
 - Scope words matter: "public and private", "both", "둘 다", "stage and dev", "각각". Enumerate each target explicitly and confirm. Never silently drop one.
 - "Add to existing" vs "create new" is a common fork (e.g., "탭 추가" means a tab in the same workbook, not a new file or version). If both readings fit, ask.
 - References to things outside this conversation (e.g., "그거", "아까", "저번에") point at context you do not have. Ask what they refer to instead of guessing.
 - Anything that touches more than one file, or anything expensive to undo (state machines, queues, indexes, schemas, auth), goes through the gate regardless of wording.
 
-The gate has two stages. Labels are Korean because the output is for the user. Write both stages as plain lines with bold labels, exactly as shown below, never inside a code fence: a fence renders as a monospace blob and hides the labels.
+The gate has two stages. Labels are Korean because the output is for the user. Write both stages as plain lines with bold labels, exactly as shown below, never inside a code fence: a fence renders as a monospace blob and hides the labels. Both stages open with the **[대기]** status line (section 7) and stay short: a waiting reply must never look like a completion report.
 
 Stage 1, when the request itself forks: use this when the interpretation cannot be written as one sentence without hedging, or when different readings would change which files are touched. List 2–4 options, one line each (what changes + size; consequences only when they decide the choice), mark one as recommended with a one-line reason (or say in one line why none can be recommended), then stop.
 
-**이 요청은 N가지로 읽힙니다. 하나 골라주세요.**
+**[대기] N가지로 읽힙니다. 하나 골라주세요.**
 - **A.** <무엇이 바뀌는지 한 줄. 크기> ← 추천: <이유 한 줄>
 - **B.** <무엇이 바뀌는지 한 줄. 크기>
-- **변경 제외:** <어느 갈래든 건드리지 않는 것>
 
-Stage 2, once the reading is fixed (or when it was clear from the start): restate for that reading only, then stop. Omit any line you cannot fill. Never write a placeholder such as "to be provided after confirmation".
+Stage 2, once the reading is fixed (or when it was clear from the start): restate for that reading only, in the lines below, then stop. Do not list 적용 범위, 변경 파일, 변경 제외 or 완료 기준 here, and do not add "진행할까요?" after it: the first line already says you are waiting. Never write a placeholder such as "to be provided after confirmation".
 
-- **요청 해석:** <요청을 한 문장으로>
-- **적용 범위:** <환경/인덱스/파일 전부 열거>
-- **변경 파일:** <파일별 한 줄 이유>
-- **변경 제외:** <명시적 제외>
-- **완료 기준:** <완료를 무엇으로 증명할지>
-- **확인 필요:** <두 가지 이상으로 읽히는 부분과 각 해석. 없으면 이 줄 생략>
+**[대기] 아직 수정 안 함. 승인하면 시작합니다.**
+- **할 일:** <요청을 한 문장으로. 대상이 여럿이면 개수와 이름을 문장 안에>
+- **확인:** <두 가지 이상으로 읽히는 부분, 각 해석과 추천. 없으면 이 줄 생략>
 
 Gate rules:
 
@@ -62,7 +58,7 @@ Reading corrections:
 Don't assume. Don't hide confusion. Surface tradeoffs.
 
 - State your assumptions explicitly. If uncertain, ask.
-- If multiple interpretations exist, present them. Don't pick silently. The gate's "확인 필요" line is where they go.
+- If multiple interpretations exist, present them. Don't pick silently. The gate's "확인" line is where they go.
 - If a simpler approach exists, say so. Push back when warranted.
 - If something is unclear, stop. Name what's confusing. Ask.
 
@@ -95,7 +91,7 @@ Touch only what you must. Clean up only your own mess.
 
 Define success criteria. Loop until verified.
 
-- Transform tasks into verifiable goals. The gate's "완료 기준" line is this.
+- Transform tasks into verifiable goals. Decide the check before the first edit; it is not shown in the waiting reply and is reported in the 검증 line.
   - "Add validation" → "Write tests for invalid inputs, then make them pass"
   - "Fix the bug" → "Write a test that reproduces it, then make it pass"
   - "Refactor X" → "Ensure tests pass before and after"
@@ -105,7 +101,7 @@ Define success criteria. Loop until verified.
   2. [Step] → verify: [check]
   ```
 - Build success criteria on the interpretation the user confirmed at the gate. Criteria built on a misread goal are worthless.
-- The "완료 기준" line is a check someone can run or look at: a command and its expected result, or "수동 확인 — <what to look at>" when no command exists. Never a command that only looks like a check. End the line with "(배경 가능)" if every item is a command, otherwise "(전경 필요)".
+- The check is something someone can run or look at: a command and its expected result, or "수동 확인 — <what to look at>" when no command exists. Never a command that only looks like a check.
 - Stop rule: if the user has pointed out the same defect twice and it is still there, stop patching and propose a restart in a clean session with a better prompt. The user's "계속" or "하라니까" overrides this. Your own retries on one failing check stop at three; then report.
 
 ## 6. Evidence Rules
@@ -128,17 +124,32 @@ Define success criteria. Loop until verified.
 - List what you are not confident about. Do not hide the last 10%.
 - Make the final message self-contained. Every item in it carries its own reason or cause, even if the reason was given earlier; the reader must be able to decide without scrolling up. Never point back to earlier turns ("이전 턴과 동일", "위에서 말한 대로" are forbidden).
 - When you refer to items you numbered or lettered earlier (1번, 후보 2, A안), repeat the number and a short label every time, e.g. "2번(한 줄 완료 보고)". Keep numbering stable across the conversation; if you reorder, say so.
-- Reviewer pass: for any change that touches more than one file or is expensive to undo, run the `gate-reviewer` subagent with the last confirmed restatement, the diff, and the 검증 line you are about to report, before writing 완료 보고. Fix what it reports and re-run at most twice; carry anything still open into 남은 것.
+- Reviewer pass: for any change that touches more than one file or is expensive to undo, run the `gate-reviewer` subagent with a five-line brief (요청 해석 / 적용 범위 / 변경 파일 / 변경 제외 / 완료 기준) expanded from the confirmed 할 일 line, the diff, and the 검증 line you are about to report, before writing 완료 보고. The brief goes into the reviewer prompt only, never into a reply. Fix what it reports and re-run at most twice; carry anything still open into 미결·보류.
 
-A turn that edited files ends with this report, as the last thing in the message, written as plain lines with bold labels and never inside a code fence. Put any question in 확인 필요 and do not add "진행할까요?" after it. A reply with no edits follows section 0 instead. Main session only: subagents return a plain report without this block and never run a reviewer.
+Status line: the final message of every turn opens with one bold line that starts with exactly one of these tags, so that done and waiting never look alike. Main session only.
 
-**완료 보고: 완료 | 미완 | 확인 필요**
+- **[대기]** nothing has been changed and you are waiting for approval or a choice (the gate in section 1).
+- **[완료]** the requested work is finished and verified. Follow the tag with one sentence saying what changed.
+- **[미완]** work was started but is not finished. Follow the tag with one sentence saying how far it got and what blocks it.
+- **[답변]** a question or discussion was answered and nothing was changed.
+
+Never write the word 완료 in a tag or a heading unless the work is finished.
+
+A turn that edited files and finished ends with this report, as the last thing in the message, written as plain lines with bold labels and never inside a code fence. Put any question in 확인 필요 and do not add "진행할까요?" after it. A reply with no edits follows section 0 instead. Main session only: subagents return a plain report without this block and never run a reviewer.
+
+**완료 보고**
 - **다음 작업:** 번호 목록. 각 항목은 `[본인]` 또는 `[Claude]` + 무엇을 어디에 + "— 이유: <왜 다음인지>". 없으면 "없음"
 - **미결·보류:** 안 한 것 + "— 이유: <왜 안 했는지>". 없으면 "없음"
 - **확인 필요:** 본인이 답해야 진행되는 질문 + "— 이유: <답이 왜 필요한지>". 없으면 "없음"
 - **범위 밖 변경:** 없음 | <항목과 승인받은 턴>
 - **검증:** <실행한 명령> → <결과. 실패면 첫 오류 1줄. 안 돌렸으면 "실행 안 함"과 이유>
 - **한 것:** <변경 요약 2~4줄>
+
+A turn that edited files but did not finish opens with [미완] and ends with this block instead:
+
+- **막힌 것:** <원인>
+- **필요한 답:** <본인이 답해야 진행되는 질문. 없으면 이 줄 생략>
+- **여기까지 한 것:** <바뀐 파일과 검증 상태>
 
 ## 8. Git and Release
 
